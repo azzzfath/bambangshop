@@ -78,6 +78,24 @@ This is the place for you to write reflections:
 
 #### Reflection Publisher-1
 
+### 1. In the Observer pattern diagram explained by the Head First Design Pattern book, Subscriber is defined as an interface. Explain based on your understanding of Observer design patterns, do we still need an interface (or `trait` in Rust) in this BambangShop case, or a single Model `struct` is enough?
+
+- Dalam konteks desain pola Observer yang ideal, menggunakan `trait` (sebagai *interface* di Rust) jauh lebih baik daripada hanya menggunakan sebuah `struct` Model tunggal. Menggunakan `trait` memungkinkan kita untuk mematuhi prinsip *Open-Closed Principle* (OCP). Jika ke depannya BambangShop ingin menambahkan tipe *subscriber* yang berbeda (misalnya: `EmailSubscriber`, `PushNotificationSubscriber`, dll), Publisher tidak perlu dimodifikasi sama sekali; kita hanya perlu membuat `struct` baru yang mengimplementasikan `trait` tersebut.
+- Namun, jika *scope* aplikasi BambangShop ini dijamin sangat kaku dan **hanya** akan pernah melayani satu jenis *subscriber* (yaitu webhook URL) selamanya, maka menggunakan satu `struct` Model saja secara teknis sudah cukup untuk membuat program berjalan, meskipun hal ini membuat kode menjadi kurang *scalable* dan *extensible* untuk pengembangan masa depan.
+
+### 2. `id` in `Program` and `url` in `Subscriber` is intended to be unique. Explain based on your understanding, is using `Vec` (list) sufficient or using `DashMap` (map/dictionary) like we currently use is necessary for this case?
+
+- Penggunaan `DashMap` (atau *map/dictionary* secara umum) sangat direkomendasikan dan bisa dibilang esensial untuk kasus ini dibandingkan menggunakan `Vec` (*list*). 
+- Karena `id` dan `url` bersifat unik, operasi yang akan paling sering kita lakukan adalah mencari (untuk melihat apakah *subscriber* sudah ada), menghapus, atau memperbarui data berdasarkan nilai unik tersebut. 
+- Jika menggunakan `Vec`, kita harus melakukan iterasi (looping) ke seluruh elemen satu per satu yang memakan waktu $O(N)$, yang akan sangat lambat ketika jumlah *subscriber* bertambah banyak. Dengan `DashMap`, kita menggunakan `id` atau `url` sebagai *key*, sehingga operasi pencarian, penambahan, dan penghapusan memiliki kompleksitas waktu mendekati $O(1)$. Selain itu, *map/dictionary* secara bawaan akan memastikan setiap *key* unik, sehingga mencegah duplikasi data secara otomatis.
+
+### 3. When programming using Rust, we are enforced by rigorous compiler constraints to make a thread-safe program. In the case of the List of Subscribers (`SUBSCRIBERS`) static variable, we used the `DashMap` external library for thread safe HashMap. Explain based on your understanding of design patterns, do we still need `DashMap` or we can implement Singleton pattern instead?
+
+- Sebenarnya, *Singleton pattern* dan *Thread-safe data structures* (seperti `DashMap`) menyelesaikan dua masalah yang berbeda, dan di Rust (khususnya untuk *web server* yang *concurrent*), kita seringkali membutuhkan kombinasi keduanya. 
+- Singleton adalah *creational pattern* yang memastikan hanya ada satu *instance* dari sebuah objek (global state). Penggunaan makro `lazy_static!` pada `SUBSCRIBERS` sebenarnya **sudah** mengimplementasikan bentuk dari pola Singleton.
+- Namun, Singleton saja tidak cukup di Rust. Karena banyak *request* (dan karenanya, banyak *thread*) yang akan mencoba membaca dan memodifikasi Singleton tersebut secara bersamaan, *compiler* Rust akan mencegahnya untuk menghindari *data race*. 
+- Kita membutuhkan mekanisme sinkronisasi untuk membuatnya *thread-safe*. `DashMap` menyediakan struktur data *map* yang *lock/synchronization*-nya sudah diatur secara internal. Jika kita tidak menggunakan `DashMap`, kita tetap mengimplementasikan Singleton, namun kita harus membungkus `HashMap` biasa dengan `Mutex` atau `RwLock` secara manual agar kompilasi berhasil dan program aman dari tabrakan memori antar thread.
+
 #### Reflection Publisher-2
 
 #### Reflection Publisher-3
