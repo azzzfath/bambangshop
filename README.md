@@ -123,3 +123,24 @@ This is the place for you to write reflections:
   - **Save Responses / Examples:** Kita bisa menyimpan contoh hasil *response* (JSON) dari API, yang nantinya bisa berfungsi sebagai dokumentasi otomatis agar tim *Frontend* tahu bentuk data yang akan mereka terima.
 
 #### Reflection Publisher-3
+
+### 1. Observer Pattern has two variations: Push model (publisher pushes data to subscribers) and Pull model (subscribers pull data from publisher). In this tutorial case, which variation of Observer Pattern that we use?
+
+- Pada tutorial ini, kita menggunakan variasi **Push model**.
+- Hal ini terlihat pada fungsi `NotificationService::notify` dan `Subscriber::update`. Setiap kali ada *event* baru (seperti pembuatan, promosi, atau penghapusan produk), *Publisher* (BambangShop) secara aktif membuat *payload* data (Notifikasi) dan langsung "mendorong" (mengirimkan) data tersebut ke URL masing-masing *Subscriber* melalui HTTP POST request. *Subscriber* pasif dan hanya menunggu data datang.
+
+### 2. What are the advantages and disadvantages of using the other variation of Observer Pattern for this tutorial case? (example: if you answer Q1 with Push, then imagine if we used Pull)
+
+Jika kita menggunakan **Pull model** (di mana *Subscriber* yang harus me-*request* data produk terbaru dari *Publisher*):
+
+- **Kelebihan:** - *Subscriber* memiliki kontrol penuh atas kapan mereka siap memproses data. Hal ini mencegah server *Subscriber* mengalami *overload* jika *Publisher* mengirimkan terlalu banyak notifikasi sekaligus dalam waktu singkat.
+  - *Publisher* tidak perlu tahu detail URL *Subscriber* dan tidak perlu mengelola *HTTP client* untuk mengirim data keluar.
+- **Kekurangan:** - **Tidak *Real-time*:** *Subscriber* harus melakukan pengecekan berulang-ulang (*polling*) ke server BambangShop (misal setiap 5 menit) untuk melihat apakah ada produk baru.
+  - **Sangat tidak efisien:** Jika tidak ada produk baru seharian, ribuan *request polling* dari *Subscriber* hanya akan membuang-buang *resource* server (CPU & *Bandwidth*) BambangShop secara sia-sia.
+  - *Publisher* harus menyimpan riwayat (*history*) semua notifikasi di *database* agar *Subscriber* bisa menariknya kapan saja.
+
+### 3. Explain what will happen to the program if we decide to not use multi-threading in the notification process.
+
+- Jika kita tidak menggunakan *multi-threading* (misalnya kita menghapus bagian `thread::spawn` di dalam *looping* fungsi `notify`), maka proses pengiriman notifikasi akan berjalan secara *synchronous* atau *blocking*.
+- Akibatnya, ketika seorang *user* (atau admin) menambahkan produk baru via API, *request* tersebut tidak akan langsung selesai. Server harus melakukan HTTP POST satu per satu ke **setiap** *Subscriber* dan menunggu prosesnya selesai.
+- Jika ada 1.000 *subscriber*, atau jika ada salah satu server *subscriber* yang sedang *down* dan lambat merespons (*timeout*), maka API kita akan tertahan (*hang*). Pengguna yang menekan tombol "Create Product" akan merasakan *loading* yang sangat lama (lambat) hanya karena menunggu proses notifikasi di *background* selesai. Dengan *multi-threading*, server bisa langsung mengembalikan respons `201 Created` ke *user* dengan cepat, sementara notifikasi dikirimkan secara paralel di *background*.
