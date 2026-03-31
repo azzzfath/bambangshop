@@ -98,4 +98,28 @@ This is the place for you to write reflections:
 
 #### Reflection Publisher-2
 
+### 1. In the Model-View Controller (MVC) compound pattern, there is no “Service” and “Repository”. Model in MVC covers both data storage and business logic. Explain based on your understanding of design principles, why we need to separate “Service” and “Repository” from a Model?
+
+- Memisahkan *Service* dan *Repository* dari *Model* adalah penerapan langsung dari prinsip *Single Responsibility Principle* (SRP) dan *Separation of Concerns* (SoC).
+- Jika semua logika bisnis dan akses penyimpanan disatukan ke dalam *Model* (sering disebut *Fat Model*), kode akan menjadi sangat besar, kompleks, dan sulit dipelihara seiring berjalannya waktu.
+- Dengan pemisahan ini, setiap lapisan punya tugas spesifik:
+  - **Model:** Hanya berfokus mendefinisikan struktur data (representasi tabel/objek).
+  - **Repository:** Hanya berfokus pada operasi akses data (*database/storage*), seperti *query*, *insert*, *update*, *delete*.
+  - **Service:** Hanya berfokus pada logika bisnis dan aturan aplikasi, menghubungkan data dari *Repository* ke *Controller*.
+- Pemisahan ini membuat kode jauh lebih mudah dibaca, lebih mudah digunakan kembali (*reusable*), dan sangat mempermudah proses *Unit Testing* karena kita bisa me-*mock* bagian *Repository* atau *Service* secara independen.
+
+### 2. What happens if we only use the Model? Explain your imagination on how the interactions between each model (Program, Subscriber, Notification) affect the code complexity for each model?
+
+- Jika kita hanya menggunakan Model tanpa pemisahan lapisan, kode kita akan menjadi sangat *tightly coupled* (sangat bergantung satu sama lain) dan berpotensi menjadi *spaghetti code*.
+- Bayangkan interaksi antara `Program`, `Subscriber`, dan `Notification`. Jika logika bisnis disatukan di Model, maka Model `Program` harus tahu cara meng-*query* `Subscriber` dari *database*, lalu harus tahu cara merakit objek `Notification` dan memicu pengirimannya.
+- Kompleksitas setiap Model akan meningkat drastis. Perubahan kecil pada cara kita menyimpan `Subscriber` bisa memaksa kita untuk merombak kode di dalam Model `Program`. Selain itu, hal ini sangat berisiko memunculkan *circular dependency* (misalnya `Program` meng-*import* `Subscriber`, dan `Subscriber` meng-*import* `Program`) yang akan membuat *compiler* Rust *error*.
+
+### 3. Have you explored more about Postman? Tell us how this tool helps you to test your current work. You might want to also list which features in Postman you are interested in or feel like it is helpful to help your Group Project or any of your future software engineering projects.
+
+- Ya, Postman sangat membantu dalam menguji API (*endpoint* aplikasi) yang sedang dikembangkan tanpa perlu membuat tampilan *frontend/UI*-nya terlebih dahulu. Kita bisa dengan mudah melakukan simulasi berbagai macam HTTP request (GET, POST, DELETE, dll) lengkap dengan *Header* dan *Body*-nya untuk melihat apakah respons server (seperti status kode 200 OK atau 201 Created) sudah sesuai ekspektasi.
+- Beberapa fitur Postman yang menurut saya sangat menarik dan berguna untuk *Group Project* atau proyek rekayasa perangkat lunak ke depannya adalah:
+  - **Collections:** Memungkinkan kita mengelompokkan berbagai *request* API secara rapi dalam satu folder (*workspace*), sehingga mudah dibagikan ke anggota tim lain.
+  - **Environment Variables:** Sangat berguna untuk menyimpan variabel yang sering berubah, seperti `base_url`. Jadi kita bisa dengan mudah berganti dari *testing* di `localhost:8000` ke URL *production* tanpa harus mengubah URL di setiap *request* satu per satu.
+  - **Save Responses / Examples:** Kita bisa menyimpan contoh hasil *response* (JSON) dari API, yang nantinya bisa berfungsi sebagai dokumentasi otomatis agar tim *Frontend* tahu bentuk data yang akan mereka terima.
+
 #### Reflection Publisher-3
